@@ -1,6 +1,8 @@
 import Vue, { DirectiveOptions } from 'vue'
+import Cookies from 'js-cookie'
 
 import 'normalize.css'
+import elementLocale from 'element-ui/lib/locale/lang/en'
 import ElementUI from 'element-ui'
 import SvgIcon from 'vue-svgicon'
 
@@ -20,7 +22,8 @@ import * as directives from '@/directives'
 import * as filters from '@/filters'
 
 Vue.use(ElementUI, {
-  size: AppModule.size, // Set element-ui default size
+  size: Cookies.get('size') || 'medium', // set element-ui default size
+  locale: elementLocale,
   i18n: (key: string, value: string) => i18n.t(key, value)
 })
 
