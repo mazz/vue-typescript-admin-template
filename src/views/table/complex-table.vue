@@ -1,90 +1,41 @@
 <template>
   <div class="app-container">
+    <el-dropdown trigger="click" @command="handleSetChannel">
+      <div>
+        <el-col :span="4" class="text-center">
+          <router-link class="pan-btn green-btn" to="/table/complex-table">
+            Select Channel
+          </router-link>
+        </el-col>
+      </div>
+      <el-dropdown-menu slot="dropdown">
+        <el-dropdown-item v-for="item in channels" :key="item.channel_uuid" :label="item.basename+'('+item.channel_id+')'" :value="item.channel_uuid" :command="item.channel_uuid">
+          {{
+            item.basename }}
+        </el-dropdown-item>
+      </el-dropdown-menu>
+    </el-dropdown>
+
     <div class="filter-container">
-      <el-input
-        v-model="listQuery.title"
-        :placeholder="$t('table.title')"
-        style="width: 200px;"
-        class="filter-item"
-        @keyup.enter.native="handleFilter"
-      />
-      <el-select
-        v-model="listQuery.importance"
-        :placeholder="$t('table.importance')"
-        clearable
-        style="width: 120px"
-        class="filter-item"
-      >
-        <el-option
-          v-for="item in importanceOptions"
-          :key="item"
-          :label="item"
-          :value="item"
-        />
-      </el-select>
-      <el-select
-        v-model="listQuery.type"
-        :placeholder="$t('table.type')"
-        clearable
-        class="filter-item"
-        style="width: 130px"
-      >
-        <el-option
-          v-for="item in calendarTypeOptions"
-          :key="item.key"
-          :label="item.display_name+'('+item.key+')'"
-          :value="item.key"
-        />
-      </el-select>
-      <el-select
-        v-model="listQuery.sort"
-        style="width: 140px"
-        class="filter-item"
-        @change="handleFilter"
-      >
-        <el-option
-          v-for="item in sortOptions"
-          :key="item.key"
-          :label="item.label"
-          :value="item.key"
-        />
-      </el-select>
-      <el-button
-        v-waves
-        class="filter-item"
-        type="primary"
-        icon="el-icon-search"
-        @click="handleFilter"
-      >
-        {{ $t('table.search') }}
+      <!-- <el-select v-model="listQuery.channel" placeholder="Channel" clearable class="filter-item" style="width: 130px"> -->
+      <!-- <el-option v-for="item in channels" :key="item.uuid" :label="item.basename+'('+item.uuid+')'" :value="item.uuid" /> -->
+      <!-- </el-select> -->
+      <!-- <el-input v-model="listQuery.title" placeholder="Localized Name" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" /> -->
+      <!-- <el-select v-model="listQuery.type" placeholder="Media Category" clearable class="filter-item" style="width: 130px"> -->
+      <!-- <el-option v-for="item in mediaCategoryOptions" :key="item.key" :label="item.display_name+'('+item.key+')'" :value="item.key" /> -->
+      <!-- </el-select> -->
+      <!-- <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter"> -->
+      <!-- <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" /> -->
+      <!-- </el-select> -->
+      <!-- <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter"> -->
+      <!-- Search -->
+      <!-- </el-button> -->
+      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
+        Add
       </el-button>
-      <el-button
-        class="filter-item"
-        style="margin-left: 10px;"
-        type="primary"
-        icon="el-icon-edit"
-        @click="handleCreate"
-      >
-        {{ $t('table.add') }}
-      </el-button>
-      <el-button
-        v-waves
-        :loading="downloadLoading"
-        class="filter-item"
-        type="primary"
-        icon="el-icon-download"
-        @click="handleDownload"
-      >
-        {{ $t('table.export') }}
-      </el-button>
-      <el-checkbox
-        v-model="showReviewer"
-        class="filter-item"
-        style="margin-left:15px;"
-        @change="tableKey=tableKey+1"
-      >
-        {{ $t('table.reviewer') }}
-      </el-checkbox>
+      <!-- <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload"> -->
+      <!-- Export -->
+      <!-- </el-button> -->
     </div>
 
     <el-table
@@ -97,468 +48,573 @@
       style="width: 100%;"
       @sort-change="sortChange"
     >
-      <el-table-column
-        :label="$t('table.id')"
-        prop="id"
-        sortable="custom"
-        align="center"
-        width="80"
-        :class-name="getSortClass('id')"
-      >
-        <template slot-scope="scope">
-          <span>{{ scope.row.id }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('table.date')"
-        width="180px"
-        align="center"
-      >
-        <template slot-scope="scope">
-          <span>{{ scope.row.timestamp | parseTime }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('table.title')"
-        min-width="150px"
-      >
+      <el-table-column label="Ordinal" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('ordinal')">
         <template slot-scope="{row}">
-          <span
-            class="link-type"
-            @click="handleUpdate(row)"
-          >{{ row.title }}</span>
-          <el-tag>{{ row.type | typeFilter }}</el-tag>
+          <span>{{ row.ordinal }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        :label="$t('table.author')"
-        width="180px"
-        align="center"
-      >
-        <template slot-scope="scope">
-          <span>{{ scope.row.author }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        v-if="showReviewer"
-        :label="$t('table.reviewer')"
-        width="110px"
-        align="center"
-      >
-        <template slot-scope="scope">
-          <span style="color:red;">{{ scope.row.reviewer }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('table.importance')"
-        width="105px"
-      >
-        <template slot-scope="scope">
-          <svg-icon
-            v-for="n in +scope.row.importance"
-            :key="n"
-            name="star"
-            class="meta-item__icon"
-          />
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('table.readings')"
-        align="center"
-        width="95"
-      >
+      <el-table-column label="Updated At" width="150px" align="center">
         <template slot-scope="{row}">
-          <span
-            v-if="row.pageviews"
-            class="link-type"
-            @click="handleGetPageviews(row.pageviews)"
-          >{{ row.pageviews }}</span>
-          <span v-else>0</span>
+          <span>{{ row.updated_at | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        :label="$t('table.status')"
-        class-name="status-col"
-        width="100"
-      >
+      <el-table-column label="Base Name" min-width="200px">
         <template slot-scope="{row}">
-          <el-tag :type="row.status | articleStatusFilter">
-            {{ row.status }}
-          </el-tag>
+          <span class="link-type" @click="handleUpdate(row)">{{ row.basename }}</span>
+          <el-tag>{{ row.media_category | typeFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column
-        :label="$t('table.actions')"
-        align="center"
-        width="230"
-        class-name="fixed-width"
-      >
+      <el-table-column label="Localized Name" min-width="200px">
         <template slot-scope="{row}">
-          <el-button
-            type="primary"
-            size="mini"
-            @click="handleUpdate(row)"
-          >
-            {{ $t('table.edit') }}
+          <span class="link-type" @click="handleUpdate(row)">{{ row.localizedname }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Language ID" width="110px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.language_id }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Hash ID" width="110px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.hash_id }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Banner Path" min-width="150px">
+        <template slot-scope="{row}">
+          <span class="link-type" @click="handleUpdate(row)">{{ row.banner_path }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Small Thumbnail Path" min-width="150px">
+        <template slot-scope="{row}">
+          <span class="link-type" @click="handleUpdate(row)">{{ row.small_thumbnail_path }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Med Thumbnail Path" min-width="150px">
+        <template slot-scope="{row}">
+          <span class="link-type" @click="handleUpdate(row)">{{ row.med_thumbnail_path }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Large Thumbnail Path" min-width="150px">
+        <template slot-scope="{row}">
+          <span class="link-type" @click="handleUpdate(row)">{{ row.large_thumbnail_path }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Actions" align="center" width="230" class-name="small-padding fixed-width">
+        <template slot-scope="{row}">
+          <el-button type="primary" size="mini" @click="handleUpdate(row)">
+            Edit
           </el-button>
-          <el-button
-            v-if="row.status!=='published'"
-            size="mini"
-            type="success"
-            @click="handleModifyStatus(row,'published')"
-          >
-            {{ $t('table.publish') }}
-          </el-button>
-          <el-button
-            v-if="row.status!=='draft'"
-            size="mini"
-            @click="handleModifyStatus(row,'draft')"
-          >
-            {{ $t('table.draft') }}
-          </el-button>
-          <el-button
-            v-if="row.status!=='deleted'"
-            size="mini"
-            type="danger"
-            @click="handleModifyStatus(row,'deleted')"
-          >
-            {{ $t('table.delete') }}
-          </el-button>
+          <!-- <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleModifyStatus(row,'deleted')"> -->
+          <!-- Delete -->
+          <!-- </el-button> -->
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination
-      v-show="total>0"
-      :total="total"
-      :page.sync="listQuery.page"
-      :limit.sync="listQuery.limit"
-      @pagination="getList"
-    />
+    <!-- <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" /> -->
 
-    <el-dialog
-      :title="textMap[dialogStatus]"
-      :visible.sync="dialogFormVisible"
-    >
-      <el-form
-        ref="dataForm"
-        :rules="rules"
-        :model="tempArticleData"
-        label-position="left"
-        label-width="100px"
-        style="width: 400px; margin-left:50px;"
-      >
-        <el-form-item
-          :label="$t('table.type')"
-          prop="type"
-        >
-          <el-select
-            v-model="tempArticleData.type"
-            class="filter-item"
-            placeholder="Please select"
-          >
-            <el-option
-              v-for="item in calendarTypeOptions"
-              :key="item.key"
-              :label="item.display_name"
-              :value="item.key"
-            />
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="70px" style="width: 400px; margin-left:70px;">
+        <el-form-item label="Channel" prop="channel">
+          <el-select v-model="temp.channel_id" placeholder="Please select">
+            <el-option v-for="item in channels" :key="item.channel_id" :label="item.basename+'('+item.channel_id+')'" :value="item.channel_id" />
           </el-select>
         </el-form-item>
-        <el-form-item
-          :label="$t('table.date')"
-          prop="timestamp"
-        >
-          <el-date-picker
-            v-model="tempArticleData.timestamp"
-            type="datetime"
-            placeholder="Please pick a date"
-          />
+        <el-form-item label="Ordinal" prop="ordinal">
+          <el-input v-model="temp.ordinal" />
         </el-form-item>
-        <el-form-item
-          :label="$t('table.title')"
-          prop="title"
-        >
-          <el-input v-model="tempArticleData.title" />
-        </el-form-item>
-        <el-form-item :label="$t('table.status')">
-          <el-select
-            v-model="tempArticleData.status"
-            class="filter-item"
-            placeholder="Please select"
-          >
-            <el-option
-              v-for="item in statusOptions"
-              :key="item"
-              :label="item"
-              :value="item"
-            />
+        <el-form-item label="Media Category" prop="media_category">
+          <el-select v-model="temp.media_category" class="filter-item" placeholder="Please select">
+            <el-option v-for="item in mediaCategoryOptions" :key="item.key" :label="item.display_name" :value="item.key" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('table.importance')">
-          <el-rate
-            v-model="tempArticleData.importance"
-            :colors="['#99A9BF', '#F7BA2A', '#FF9900']"
-            :max="3"
-            style="margin-top:8px;"
-          />
+        <!-- <el-form-item label="Date" prop="updated_at">
+          <el-date-picker v-model="temp.updated_at" type="datetime" placeholder="Please pick a date" />
+        </el-form-item> -->
+        <el-form-item label="Basename" prop="basename">
+          <el-input v-model="temp.basename" />
         </el-form-item>
-        <el-form-item :label="$t('table.remark')">
-          <el-input
-            v-model="tempArticleData.abstractContent"
-            :autosize="{minRows: 2, maxRows: 4}"
-            type="textarea"
-            placeholder="Please input"
-          />
+        <el-form-item label="Localized Name" prop="localizedname">
+          <el-input v-model="temp.localizedname" />
+        </el-form-item>
+        <el-form-item label="Language ID" prop="language_id">
+          <el-input v-model="temp.language_id" />
+        </el-form-item>
+        <el-form-item label="Banner Path" prop="banner_path">
+          <el-input v-model="temp.banner_path" />
+        </el-form-item>
+        <el-form-item label="Small Thumbnail Path" prop="small_thumbnail_path">
+          <el-input v-model="temp.small_thumbnail_path" />
+        </el-form-item>
+        <el-form-item label="Medium Thumbnail Path" prop="med_thumbnail_path">
+          <el-input v-model="temp.med_thumbnail_path" />
+        </el-form-item>
+        <el-form-item label="Large Thumbnail Path" prop="large_thumbnail_path">
+          <el-input v-model="temp.large_thumbnail_path" />
         </el-form-item>
       </el-form>
-      <div
-        slot="footer"
-        class="dialog-footer"
-      >
+      <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">
-          {{ $t('table.cancel') }}
+          Cancel
         </el-button>
-        <el-button
-          type="primary"
-          @click="dialogStatus==='create'?createData():updateData()"
-        >
-          {{ $t('table.confirm') }}
+        <el-button type="primary" @click="dialogStatus==='create'?createData():updateData()">
+          <!-- <el-button @click="dialogStatus==='create'?createData():updateData()"> -->
+          Confirm
         </el-button>
       </div>
     </el-dialog>
 
-    <el-dialog
-      :visible.sync="dialogPageviewsVisible"
-      title="Reading statistics"
-    >
-      <el-table
-        :data="pageviewsData"
-        border
-        fit
-        highlight-current-row
-        style="width: 100%"
-      >
-        <el-table-column
-          prop="key"
-          label="Channel"
-        />
-        <el-table-column
-          prop="pageviews"
-          label="Pageviews"
-        />
+    <el-dialog :visible.sync="dialogPvVisible" title="Reading statistics">
+      <el-table :data="pvData" border fit highlight-current-row style="width: 100%">
+        <el-table-column prop="key" label="Channel" />
+        <el-table-column prop="pv" label="Pv" />
       </el-table>
-      <span
-        slot="footer"
-        class="dialog-footer"
-      >
-        <el-button
-          type="primary"
-          @click="dialogPageviewsVisible = false"
-        >{{ $t('table.confirm') }}</el-button>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="dialogPvVisible = false">Confirm</el-button>
       </span>
     </el-dialog>
+
+    <el-button type="primary" @click="addLocalizationDialogVisible = true">
+      open a Drag Dialog
+    </el-button>
+
+    <el-dialog v-el-drag-dialog :visible.sync="addLocalizationDialogVisible" title="Add Localized Playlist Title" @dragDialog="handleDrag">
+      <el-form ref="addLocalizationForm" :rules="addLocalizationRules" :model="addLocalizationTemp" label-position="left" label-width="120px" style="width: 400px; margin-left:70px;">
+
+        <!-- localized lang popover -->
+        <el-form-item label="Language" prop="addLocalizationValue">
+          <el-select ref="select" v-model="addLocalizationValue" placeholder="en">
+            <el-option v-for="item in languageOptions" :key="item.addLocalizationValue" :label="item.label" :value="item.addLocalizationValue" />
+          </el-select>
+        </el-form-item>
+
+        <!-- localized title field -->
+        <el-form-item label="Localized Title" prop="addingLocalizedTitle">
+          <el-input v-model="addingLocalizedTitle" />
+        </el-form-item>
+
+        <!-- add localization button -->
+        <el-form-item>
+          <el-button type="normal" @click="handleAddLocalizationTitle">
+            + Add Localized Title
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <!-- <el-table :data="addLocalizationTitleData">
+        <el-table-column property="localization" label="Localization" width="200" />
+        <el-table-column property="localizedTitle" label="Localized Title" />
+      </el-table> -->
+
+      <el-table v-loading="listLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
+        <el-table-column align="center" label="Localization" width="200">
+          <template slot-scope="{row}">
+            <span>{{ row.localization }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column align="center" label="Localized Title">
+          <template slot-scope="{row}">
+            <span>{{ row.localizedTitle }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column align="center" label="Actions" width="120">
+          <template slot-scope="{row}">
+            <el-button
+              v-if="row.edit"
+              type="success"
+              size="small"
+              icon="el-icon-circle-check-outline"
+              @click="confirmEdit(row)"
+            >
+              Ok
+            </el-button>
+            <el-button
+              v-else
+              type="primary"
+              size="small"
+              icon="el-icon-edit"
+              @click="row.edit=!row.edit"
+            >
+              Edit
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+</el-dialog>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import { Form } from 'element-ui'
-import { cloneDeep } from 'lodash'
-import { getArticles, getPageviews, createArticle, updateArticle, defaultArticleData } from '@/api/articles'
-import { IArticleData } from '@/api/types'
-import { exportJson2Excel } from '@/utils/excel'
-import { formatJson } from '@/utils'
-import Pagination from '@/components/Pagination/index.vue'
+<script>
 
-const calendarTypeOptions = [
-  { key: 'CN', display_name: 'China' },
-  { key: 'US', display_name: 'USA' },
-  { key: 'JP', display_name: 'Japan' },
-  { key: 'EU', display_name: 'Eurozone' }
+// import { fetchList, fetchPv, createArticle, updateArticle } from '@/api/article'
+// import waves from '@/directive/waves' // waves directive
+import { parseTime } from '@/utils'
+import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+
+const mediaCategoryOptions = [
+  { key: 'bible', display_name: 'Bible' },
+  { key: 'gospel', display_name: 'Gospel' },
+  { key: 'livestream', display_name: 'Livestream' },
+  { key: 'motivation', display_name: 'Motivation' },
+  { key: 'movie', display_name: 'Movie' },
+  { key: 'music', display_name: 'Music' },
+  { key: 'podcast', display_name: 'Podcast' },
+  { key: 'preaching', display_name: 'Preaching' },
+  { key: 'testimony', display_name: 'Testimony' },
+  { key: 'tutorial', display_name: 'Tutorial' },
+  { key: 'conference', display_name: 'Conference' },
+  { key: 'audiobook', display_name: 'Audiobook' }
 ]
 
 // arr to obj, such as { CN : "China", US : "USA" }
-const calendarTypeKeyValue = calendarTypeOptions.reduce((acc: { [key: string]: string }, cur) => {
+const calendarTypeKeyValue = mediaCategoryOptions.reduce((acc, cur) => {
   acc[cur.key] = cur.display_name
   return acc
-}, {}) as { [key: string]: string }
+}, {})
 
-@Component({
+export default {
   name: 'ComplexTable',
-  components: {
-    Pagination
-  },
+  // components: { Pagination },
+  // directives: { waves },
   filters: {
-    typeFilter: (type: string) => {
+    statusFilter(status) {
+      const statusMap = {
+        published: 'success',
+        draft: 'info',
+        deleted: 'danger'
+      }
+      return statusMap[status]
+    },
+    typeFilter(type) {
       return calendarTypeKeyValue[type]
     }
-  }
-})
-export default class extends Vue {
-  private tableKey = 0
-  private list: IArticleData[] = []
-  private total = 0
-  private listLoading = true
-  private listQuery = {
-    page: 1,
-    limit: 20,
-    importance: undefined,
-    title: undefined,
-    type: undefined,
-    sort: '+id'
-  }
-  private importanceOptions = [1, 2, 3]
-  private calendarTypeOptions = calendarTypeOptions
-  private sortOptions = [
-    { label: 'ID Ascending', key: '+id' },
-    { label: 'ID Descending', key: '-id' }
-  ]
-  private statusOptions = ['published', 'draft', 'deleted']
-  private showReviewer = false
-  private dialogFormVisible = false
-  private dialogStatus = ''
-  private textMap = {
-    update: 'Edit',
-    create: 'Create'
-  }
-  private dialogPageviewsVisible = false
-  private pageviewsData = []
-  private rules = {
-    type: [{ required: true, message: 'type is required', trigger: 'change' }],
-    timestamp: [{ required: true, message: 'timestamp is required', trigger: 'change' }],
-    title: [{ required: true, message: 'title is required', trigger: 'blur' }]
-  }
-  private downloadLoading = false
-  private tempArticleData = defaultArticleData
-
+  },
+  data() {
+    return {
+      tableKey: 0,
+      list: null,
+      total: 0,
+      listLoading: true,
+      listQuery: {
+        page: 1,
+        limit: 20,
+        importance: undefined,
+        title: undefined,
+        type: undefined,
+        sort: '+ordinal'
+      },
+      channels: [],
+      mediaCategoryOptions,
+      sortOptions: [{ label: 'Ordinal Ascending', key: '+ordinal' }, { label: 'Ordinal Descending', key: '-ordinal' }],
+      temp: {
+        channel_id: null,
+        ordinal: null,
+        updated_at: new Date(),
+        basename: null,
+        localizedname: null,
+        language_id: null,
+        media_category: null,
+        banner_path: null,
+        small_thumbnail_path: null,
+        med_thumbnail_path: null,
+        large_thumbnail_path: null
+      },
+      dialogFormVisible: false,
+      dialogStatus: '',
+      textMap: {
+        update: 'Edit',
+        create: 'Create'
+      },
+      dialogPvVisible: false,
+      pvData: [],
+      rules: {
+        // channel: [{ required: true, message: 'channel is required', trigger: 'blur' }],
+        ordinal: [{ required: true, message: 'ordinal is required', trigger: 'blur' }],
+        media_category: [{ required: true, message: 'media category is required', trigger: 'blur' }],
+        basename: [{ required: true, message: 'basename is required', trigger: 'blur' }],
+        localizedname: [{ required: true, message: 'localizedname is required', trigger: 'blur' }],
+        language_id: [{ required: true, message: 'language id is required', trigger: 'blur' }]
+      },
+      downloadLoading: false,
+      addLocalizationDialogVisible: false,
+      languageOptions: [
+        { addLocalizationValue: 'en', label: 'en' },
+        { addLocalizationValue: 'el', label: 'el' },
+        { addLocalizationValue: 'es', label: 'es' },
+        { addLocalizationValue: 'fr', label: 'fr' },
+        { addLocalizationValue: 'hi', label: 'hi' },
+        { addLocalizationValue: 'hu', label: 'hu' },
+        { addLocalizationValue: 'nl', label: 'nl' },
+        { addLocalizationValue: 'ny', label: 'ny' },
+        { addLocalizationValue: 'pt', label: 'pt' }
+      ],
+      addLocalizationValue: 'en',
+      addingLocalizedTitle: '',
+      addLocalizationTitleData: [{
+        localization: 'en',
+        localizedTitle: 'The English Title'
+      }, {
+        localization: 'fr',
+        localizedTitle: 'Le French Title'
+      }]
+    }
+  },
   created() {
-    this.getList()
-  }
+    this.getChannels()
+  },
+  methods: {
+    isNumeric: function(n) {
+      return !isNaN(parseFloat(n)) && isFinite(n)
+    },
+    getChannels() {
+      // show playlists from the bible channel as default
+      var bibleChannelUuid = ''
 
-  private async getList() {
-    this.listLoading = true
-    const { data } = await getArticles(this.listQuery)
-    this.list = data.items
-    this.total = data.total
-    // Just to simulate the time of the request
-    setTimeout(() => {
-      this.listLoading = false
-    }, 0.5 * 1000)
-  }
-
-  private handleFilter() {
-    this.listQuery.page = 1
-    this.getList()
-  }
-
-  private handleModifyStatus(row: any, status: string) {
-    this.$message({
-      message: '操作成功',
-      type: 'success'
-    })
-    row.status = status
-  }
-
-  private sortChange(data: any) {
-    const { prop, order } = data
-    if (prop === 'id') {
-      this.sortByID(order)
-    }
-  }
-
-  private sortByID(order: string) {
-    if (order === 'ascending') {
-      this.listQuery.sort = '+id'
-    } else {
-      this.listQuery.sort = '-id'
-    }
-    this.handleFilter()
-  }
-
-  private getSortClass(key: string) {
-    const sort = this.listQuery.sort
-    return sort === `+${key}` ? 'ascending' : sort === `-${key}` ? 'descending' : ''
-  }
-
-  private resetTempArticleData() {
-    this.tempArticleData = cloneDeep(defaultArticleData)
-  }
-
-  private handleCreate() {
-    this.resetTempArticleData()
-    this.dialogStatus = 'create'
-    this.dialogFormVisible = true
-    this.$nextTick(() => {
-      (this.$refs['dataForm'] as Form).clearValidate()
-    })
-  }
-
-  private createData() {
-    (this.$refs['dataForm'] as Form).validate(async(valid) => {
-      if (valid) {
-        let { id, ...articleData } = this.tempArticleData
-        articleData.author = 'vue-typescript-admin'
-        const { data } = await createArticle({ article: articleData })
-        this.list.unshift(data.article)
-        this.dialogFormVisible = false
-        this.$notify({
-          title: '成功',
-          message: '创建成功',
-          type: 'success',
-          duration: 2000
+      axios.get('http://localhost:4000/api/v1.3/orgs/64c1fa34-ebe9-425b-ae58-4815d933b01c/channels?language-id=en&offset=1&limit=50'
+        // { params: { type: 'all', }, }
+      )
+        .then((res) => {
+          console.log('Success Response', res.data)
+          res.data.result.forEach((channel) => {
+            this.channels.push({ channel_uuid: channel.uuid, basename: channel.basename, hash_id: channel.hash_id, channel_id: channel.channel_id, updated_at: channel.updated_at })
+            console.log('this.channels', this.channels)
+            console.log('channel.basename', channel.basename)
+            if (channel.basename == 'Bible') {
+              console.log('found Bible')
+              bibleChannelUuid = channel.uuid
+              this.getList(bibleChannelUuid)
+            }
+          })
+        })
+        .catch((err) => {
+          console.log('Error', err)
+        })
+      console.log('bibleChannelUuid', bibleChannelUuid)
+      // this.getList()
+    },
+    getList(channel_uuid) {
+      console.log(`getList: ${channel_uuid}`)
+      if (channel_uuid != null) {
+        this.listLoading = true
+        return axios.get(`http://localhost:4000/api/v1.3/channels/${channel_uuid}/playlists?language-id=en&offset=1&limit=1000`)
+          .then(response => {
+            console.log(response)
+            this.listLoading = false
+            this.list = response.data.result
+            this.total = response.data.total_entries
+          })
+      }
+    },
+    handleSetChannel(channel_uuid) {
+      console.log(`handleSetChannel: ${channel_uuid}`)
+      // this.$ELEMENT.size = size
+      // this.$store.dispatch('app/setSize', size)
+      // this.refreshView()
+      if (channel_uuid != null) {
+        this.getList(channel_uuid)
+        this.$message({
+          message: 'Switch Channel Success',
+          type: 'success'
         })
       }
-    })
-  }
+    },
+    handleFilter() {
+      this.listQuery.page = 1
+      this.getList()
+    },
+    handleModifyStatus(row, status) {
+      this.$message({
+        message: '操作Success',
+        type: 'success'
+      })
+      row.status = status
+    },
+    sortChange(data) {
+      const { prop, order } = data
+      if (prop === 'ordinal') {
+        this.sortByOrdinal(order)
+      }
+    },
+    sortByOrdinal(order) {
+      if (order === 'ascending') {
+        this.listQuery.sort = '+ordinal'
+      } else {
+        this.listQuery.sort = '-ordinal'
+      }
+      this.handleFilter()
+    },
+    resetTemp() {
+      this.temp = {
+        channel_id: null,
+        ordinal: null,
+        updated_at: new Date(),
+        basename: null,
+        localizedname: null,
+        language_id: null,
+        media_category: null,
+        banner_path: null,
+        small_thumbnail_path: null,
+        med_thumbnail_path: null,
+        large_thumbnail_path: null
+      }
+    },
+    handleCreate() {
+      this.resetTemp()
+      this.dialogStatus = 'create'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    createData() {
+      console.log('createData')
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          console.log(`valid, refs dataForm: ${this.$refs['dataForm']}`)
+          console.log(`valid, temp.ordinal: ${this.temp.ordinal}`)
+          console.log(`valid, temp.media_category: ${this.temp.media_category}`)
+          console.log(`valid, temp.updated_at: ${this.temp.updated_at}`)
+          console.log(`valid, temp.basename: ${this.temp.basename}`)
+          console.log(`valid, temp.localizedname: ${this.temp.localizedname}`)
+          console.log(`valid, temp.language_id: ${this.temp.language_id}`)
+          console.log(`valid, temp.channel_id: ${this.temp.channel_id}`)
+          console.log(`valid, temp.banner_path: ${this.temp.banner_path}`)
+          console.log(`valid, temp.small_thumbnail_path: ${this.temp.small_thumbnail_path}`)
+          console.log(`valid, temp.med_thumbnail_path: ${this.temp.med_thumbnail_path}`)
+          console.log(`valid, temp.large_thumbnail_path: ${this.temp.large_thumbnail_path}`)
 
-  private handleUpdate(row: any) {
-    this.tempArticleData = Object.assign({}, row)
-    this.tempArticleData.timestamp = +new Date(this.tempArticleData.timestamp)
-    this.dialogStatus = 'update'
-    this.dialogFormVisible = true
-    this.$nextTick(() => {
-      (this.$refs['dataForm'] as Form).clearValidate()
-    })
-  }
+          var ordinal = Number(this.temp.ordinal)
+          var language_id = this.temp.language_id
+          console.log(`language_id: ${language_id}`)
 
-  private updateData() {
-    (this.$refs['dataForm'] as Form).validate(async(valid) => {
-      if (valid) {
-        const tempData = Object.assign({}, this.tempArticleData)
-        tempData.timestamp = +new Date(tempData.timestamp) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
-        const { data } = await updateArticle(tempData.id, { article: tempData })
-        for (const v of this.list) {
-          if (v.id === data.article.id) {
-            const index = this.list.indexOf(v)
-            this.list.splice(index, 1, data.article)
-            break
+          const body = {
+            ordinal: ordinal,
+            media_category: this.temp.media_category,
+            updated_at: this.temp.updated_at,
+            basename: this.temp.basename,
+            localized_titles: [{ [this.temp.language_id]: this.temp.localizedname }],
+            channel_id: this.temp.channel_id,
+            banner_path: this.temp.banner_path,
+            small_thumbnail_path: this.temp.small_thumbnail_path,
+            med_thumbnail_path: this.temp.med_thumbnail_path,
+            large_thumbnail_path: this.temp.large_thumbnail_path
           }
+
+          axios.post('http://localhost:4000/api/v1.3/playlists/add', body)
+          // .then(function (response) {
+            .then((response) => {
+              this.$notify({
+                title: 'Success',
+                message: 'Content submitted successfully',
+                type: 'success',
+                duration: 2000
+              })
+              this.dialogFormVisible = false
+
+              // reset globals
+              this.channels = []
+              this.resetTemp()
+
+              this.getChannels()
+              console.log(`response: ${response}`)
+            })
+          // .catch(function (error) {
+            .catch((error) => {
+              this.$notify({
+                title: 'Error',
+                message: 'Please check the values you attempted to submit',
+                type: 'error',
+                duration: 2000
+              })
+              console.log(`error: ${error}`)
+            })
+
+          // }
+
+          // createArticle(this.temp).then(() => {
+          //   this.list.unshift(this.temp)
+          //   this.$notify({
+          //     title: 'Success',
+          //     message: 'Created Successfully',
+          //     type: 'success',
+          //     duration: 2000
+          //   })
+          // })
         }
-        this.dialogFormVisible = false
-        this.$notify({
-          title: '成功',
-          message: '更新成功',
-          type: 'success',
-          duration: 2000
-        })
-      }
-    })
-  }
-
-  private async handleGetPageviews(pageviews: string) {
-    const { data } = await getPageviews({ /* Your params here */ })
-    this.pageviewsData = data.pageviews
-    this.dialogPageviewsVisible = true
-  }
-
-  private handleDownload() {
-    this.downloadLoading = true
-    const tHeader = ['timestamp', 'title', 'type', 'importance', 'status']
-    const filterVal = ['timestamp', 'title', 'type', 'importance', 'status']
-    const data = formatJson(filterVal, this.list)
-    exportJson2Excel(tHeader, data, 'table-list')
-    this.downloadLoading = false
+      })
+    },
+    handleUpdate(row) {
+      this.temp = Object.assign({}, row) // copy obj
+      this.temp.updated_at = new Date(this.temp.updated_at)
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    updateData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = Object.assign({}, this.temp)
+          tempData.updated_at = +new Date(tempData.updated_at) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
+          updateArticle(tempData).then(() => {
+            for (const v of this.list) {
+              if (v.id === this.temp.id) {
+                const index = this.list.indexOf(v)
+                this.list.splice(index, 1, this.temp)
+                break
+              }
+            }
+            this.dialogFormVisible = false
+            this.$notify({
+              title: 'Success',
+              message: 'Update Successfully',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
+    handleAddLocalizationTitle() {
+      this.addLocalizationTitleData.push({ localization: this.addLocalizationValue, localizedTitle: this.addingLocalizedTitle })
+      console.log('this.addLocalizationTitleData', this.addLocalizationTitleData)
+    },
+    handleDelete(row) {
+      this.$notify({
+        title: 'Success',
+        message: 'Delete Successfully',
+        type: 'success',
+        duration: 2000
+      })
+      const index = this.list.indexOf(row)
+      this.list.splice(index, 1)
+    },
+    handleFetchPv(pv) {
+      fetchPv(pv).then(response => {
+        this.pvData = response.data.pvData
+        this.dialogPvVisible = true
+      })
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map(v => filterVal.map(j => {
+        if (j === 'updated_at') {
+          return parseTime(v[j])
+        } else {
+          return v[j]
+        }
+      }))
+    },
+    getSortClass: function(key) {
+      const sort = this.listQuery.sort
+      return sort === `+${key}`
+        ? 'ascending'
+        : sort === `-${key}`
+          ? 'descending'
+          : ''
+    }
   }
 }
 </script>
