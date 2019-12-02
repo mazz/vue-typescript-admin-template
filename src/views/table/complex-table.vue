@@ -114,7 +114,7 @@
     <!-- <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" /> -->
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="70px" style="width: 400px; margin-left:70px;">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="120px" style="width: 600px; margin-left:30px;">
         <el-form-item label="Channel" prop="channel">
           <el-select v-model="temp.channel_id" placeholder="Please select">
             <el-option v-for="item in channels" :key="item.channel_id" :label="item.basename+'('+item.channel_id+')'" :value="item.channel_id" />
@@ -134,12 +134,23 @@
         <el-form-item label="Basename" prop="basename">
           <el-input v-model="temp.basename" />
         </el-form-item>
-        <el-form-item label="Localized Name" prop="localizedname">
+
+
+      <v-divider></v-divider>
+
+
+        <!-- <el-form-item label="Localized Titles" prop="addlocalizedtitles">
+        <el-button type="primary" @click="addLocalizationDialogVisible = true">
+        + Add Localized Titles
+        </el-button>
+        </el-form-item> -->
+
+        <!-- <el-form-item label="Localized Name" prop="localizedname">
           <el-input v-model="temp.localizedname" />
         </el-form-item>
         <el-form-item label="Language ID" prop="language_id">
           <el-input v-model="temp.language_id" />
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="Banner Path" prop="banner_path">
           <el-input v-model="temp.banner_path" />
         </el-form-item>
@@ -152,6 +163,60 @@
         <el-form-item label="Large Thumbnail Path" prop="large_thumbnail_path">
           <el-input v-model="temp.large_thumbnail_path" />
         </el-form-item>
+
+
+               <!-- localized lang popover -->
+        <el-form-item label="Language" prop="addLocalizationValue">
+          <el-select ref="select" v-model="addLocalizationValue" placeholder="en">
+            <el-option v-for="item in languageOptions" :key="item.addLocalizationValue" :label="item.label" :value="item.addLocalizationValue" />
+          </el-select>
+        </el-form-item>
+
+        <v-divider></v-divider>
+
+        <!-- localized title field -->
+        <el-form-item label="Localized Title" prop="addingLocalizedTitle">
+          <el-input v-model="addingLocalizedTitle" />
+        </el-form-item>
+
+        <!-- add localization button -->
+        <el-form-item>
+          <el-button type="normal" @click="handleAddLocalizationTitle">
+            + Add Localized Title
+          </el-button>
+        </el-form-item>
+
+      <!-- <el-table :data="addLocalizationTitleData">
+        <el-table-column property="localization" label="Localization" width="200" />
+        <el-table-column property="localizedTitle" label="Localized Title" />
+      </el-table> -->
+
+      <el-table v-loading="listLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
+        <el-table-column align="center" label="Localization">
+          <template slot-scope="{row}">
+            <span>{{ row.localization }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column align="center" label="Localized Title">
+          <template slot-scope="{row}">
+            <span>{{ row.localizedTitle }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column align="center" label="Actions">
+          <template slot-scope="{row}">
+            <el-button
+              type="primary"
+              size="small"
+              @click="confirmLocalizedRowDelete(row)"
+            >
+              Delete
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">
@@ -174,11 +239,7 @@
       </span>
     </el-dialog>
 
-    <el-button type="primary" @click="addLocalizationDialogVisible = true">
-      open a Drag Dialog
-    </el-button>
-
-    <el-dialog v-el-drag-dialog :visible.sync="addLocalizationDialogVisible" title="Add Localized Playlist Title" @dragDialog="handleDrag">
+    <el-dialog :visible.sync="addLocalizationDialogVisible" title="Add Localized Playlist Title">
       <el-form ref="addLocalizationForm" :rules="addLocalizationRules" :model="addLocalizationTemp" label-position="left" label-width="120px" style="width: 400px; margin-left:70px;">
 
         <!-- localized lang popover -->
@@ -222,32 +283,22 @@
         <el-table-column align="center" label="Actions" width="120">
           <template slot-scope="{row}">
             <el-button
-              v-if="row.edit"
-              type="success"
-              size="small"
-              icon="el-icon-circle-check-outline"
-              @click="confirmEdit(row)"
-            >
-              Ok
-            </el-button>
-            <el-button
-              v-else
               type="primary"
               size="small"
-              icon="el-icon-edit"
-              @click="row.edit=!row.edit"
+              @click="confirmLocalizedRowDelete(row)"
             >
-              Edit
+              Delete
             </el-button>
           </template>
         </el-table-column>
       </el-table>
-</el-dialog>
+
+    </el-dialog>
   </div>
 </template>
 
 <script>
-
+import axios from 'axios'
 // import { fetchList, fetchPv, createArticle, updateArticle } from '@/api/article'
 // import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
@@ -352,13 +403,7 @@ export default {
       ],
       addLocalizationValue: 'en',
       addingLocalizedTitle: '',
-      addLocalizationTitleData: [{
-        localization: 'en',
-        localizedTitle: 'The English Title'
-      }, {
-        localization: 'fr',
-        localizedTitle: 'Le French Title'
-      }]
+      addLocalizationTitleData: []
     }
   },
   created() {
@@ -489,12 +534,23 @@ export default {
           var language_id = this.temp.language_id
           console.log(`language_id: ${language_id}`)
 
+          var localized_titles = []
+          for(let i = 0; i< this.addLocalizationTitleData.length; i++) {
+            // document.Write(myArray[i]+"<br>");
+            const localization = this.addLocalizationTitleData[i].localization
+            const localizedTitle = this.addLocalizationTitleData[i].localizedTitle
+            localized_titles.push({[localization]: localizedTitle}) 
+          }
+
+          console.log(`localized_titles: ${localized_titles}`)
+
           const body = {
             ordinal: ordinal,
             media_category: this.temp.media_category,
             updated_at: this.temp.updated_at,
             basename: this.temp.basename,
-            localized_titles: [{ [this.temp.language_id]: this.temp.localizedname }],
+            // localized_titles: [{ [this.temp.language_id]: this.temp.localizedname }],
+            localized_titles: localized_titles,
             channel_id: this.temp.channel_id,
             banner_path: this.temp.banner_path,
             small_thumbnail_path: this.temp.small_thumbnail_path,
@@ -581,6 +637,15 @@ export default {
     handleAddLocalizationTitle() {
       this.addLocalizationTitleData.push({ localization: this.addLocalizationValue, localizedTitle: this.addingLocalizedTitle })
       console.log('this.addLocalizationTitleData', this.addLocalizationTitleData)
+    },
+    confirmLocalizedRowDelete(row) {
+      console.log('confirmLocalizedRowDelete', row)
+      this.$message({
+        message: 'The title has been deleted',
+        type: 'success'
+      })
+      const index = this.addLocalizationTitleData.indexOf(row)
+      this.addLocalizationTitleData.splice(index, 1)
     },
     handleDelete(row) {
       this.$notify({
