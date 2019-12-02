@@ -158,9 +158,9 @@
         </el-button>
         </el-form-item>
 
-        <!-- <el-form-item label="Language" prop="pushLanguageId">
-          <el-select ref="select" v-model="pushLanguageId" placeholder="en">
-            <el-option v-for="item in languageOptions" :key="item.pushLanguageId" :label="item.label" :value="item.pushLanguageId" />
+        <!-- <el-form-item label="Language" prop="language_identifier">
+          <el-select ref="select" v-model="language_identifier" placeholder="en">
+            <el-option v-for="item in supportedLanguages" :key="item.language_identifier" :label="item.label" :value="item.language_identifier" />
           </el-select>
         </el-form-item>
 
@@ -224,12 +224,16 @@
     </el-dialog>
 
     <el-dialog :visible.sync="addLocalizationDialogVisible" title="Add/Edit Localized Playlist Title">
-      <el-form ref="addLocalizationForm" :rules="addLocalizationRules" :model="addLocalizationTemp" label-position="left" label-width="120px" style="width: 400px; margin-left:70px;">
+      <el-form ref="addLocalizationForm" 
+      label-position="left" 
+      label-width="120px" 
+      style="width: 400px; margin-left:70px;"
+      >
 
         <!-- localized lang popover -->
-        <el-form-item label="Language ID" prop="pushLanguageId">
-          <el-select ref="select" v-model="pushLanguageId" placeholder="en">
-            <el-option v-for="item in languageOptions" :key="item.pushLanguageId" :label="item.label" :value="item.pushLanguageId" />
+        <el-form-item label="Language ID" prop="language_identifier">
+          <el-select ref="select" v-model="language_identifier" placeholder="en">
+            <el-option v-for="item in supportedLanguages" :key="item.language_identifier" :label="item.language_identifier" :value="item.language_identifier" />
           </el-select>
         </el-form-item>
 
@@ -374,18 +378,7 @@ export default {
       },
       downloadLoading: false,
       addLocalizationDialogVisible: false,
-      languageOptions: [
-        { pushLanguageId: 'en', label: 'en' },
-        { pushLanguageId: 'el', label: 'el' },
-        { pushLanguageId: 'es', label: 'es' },
-        { pushLanguageId: 'fr', label: 'fr' },
-        { pushLanguageId: 'hi', label: 'hi' },
-        { pushLanguageId: 'hu', label: 'hu' },
-        { pushLanguageId: 'nl', label: 'nl' },
-        { pushLanguageId: 'ny', label: 'ny' },
-        { pushLanguageId: 'pt', label: 'pt' }
-      ],
-      pushLanguageId: 'en',
+      language_identifier: '--',
       pushLocalizedName: ''
     }
   },
@@ -668,7 +661,7 @@ export default {
       })
     },
     handleAddLocalizationTitle() {
-      this.addLocalizationTitleData.push({ language_id: this.pushLanguageId, localizedname: this.pushLocalizedName })
+      this.addLocalizationTitleData.push({ language_id: this.language_identifier, localizedname: this.pushLocalizedName })
       console.log('this.addLocalizationTitleData', this.addLocalizationTitleData)
     },
     confirmLocalizedRowDelete(row) {
