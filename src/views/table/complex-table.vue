@@ -64,16 +64,6 @@
           <el-tag>{{ row.media_category | typeFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Localized Name" min-width="200px">
-        <template slot-scope="{row}">
-          <span class="link-type" @click="handleUpdate(row)">{{ row.localizedname }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Language ID" width="110px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.language_id }}</span>
-        </template>
-      </el-table-column>
       <el-table-column label="Hash ID" width="110px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.hash_id }}</span>
@@ -165,31 +155,28 @@
         </el-form-item>
 
 
-               <!-- localized lang popover -->
-        <el-form-item label="Language" prop="addLocalizationValue">
+        <el-form-item label="Localizations" prop="localizations">
+        <el-button type="primary" @click="addLocalizationDialogVisible = true">
+          Edit
+        </el-button>
+        </el-form-item>
+
+        <!-- <el-form-item label="Language" prop="addLocalizationValue">
           <el-select ref="select" v-model="addLocalizationValue" placeholder="en">
             <el-option v-for="item in languageOptions" :key="item.addLocalizationValue" :label="item.label" :value="item.addLocalizationValue" />
           </el-select>
         </el-form-item>
 
-        <v-divider></v-divider>
-
-        <!-- localized title field -->
         <el-form-item label="Localized Title" prop="addingLocalizedTitle">
           <el-input v-model="addingLocalizedTitle" />
         </el-form-item>
 
-        <!-- add localization button -->
         <el-form-item>
           <el-button type="normal" @click="handleAddLocalizationTitle">
             + Add Localized Title
           </el-button>
-        </el-form-item>
+        </el-form-item> -->
 
-      <!-- <el-table :data="addLocalizationTitleData">
-        <el-table-column property="localization" label="Localization" width="200" />
-        <el-table-column property="localizedTitle" label="Localized Title" />
-      </el-table> -->
 
       <el-table v-loading="listLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
         <el-table-column align="center" label="Localization">
@@ -239,7 +226,7 @@
       </span>
     </el-dialog>
 
-    <el-dialog :visible.sync="addLocalizationDialogVisible" title="Add Localized Playlist Title">
+    <el-dialog :visible.sync="addLocalizationDialogVisible" title="Add/Edit Localized Playlist Title">
       <el-form ref="addLocalizationForm" :rules="addLocalizationRules" :model="addLocalizationTemp" label-position="left" label-width="120px" style="width: 400px; margin-left:70px;">
 
         <!-- localized lang popover -->
@@ -364,8 +351,6 @@ export default {
         ordinal: null,
         updated_at: new Date(),
         basename: null,
-        localizedname: null,
-        language_id: null,
         media_category: null,
         banner_path: null,
         small_thumbnail_path: null,
@@ -384,9 +369,7 @@ export default {
         // channel: [{ required: true, message: 'channel is required', trigger: 'blur' }],
         ordinal: [{ required: true, message: 'ordinal is required', trigger: 'blur' }],
         media_category: [{ required: true, message: 'media category is required', trigger: 'blur' }],
-        basename: [{ required: true, message: 'basename is required', trigger: 'blur' }],
-        localizedname: [{ required: true, message: 'localizedname is required', trigger: 'blur' }],
-        language_id: [{ required: true, message: 'language id is required', trigger: 'blur' }]
+        basename: [{ required: true, message: 'basename is required', trigger: 'blur' }]
       },
       downloadLoading: false,
       addLocalizationDialogVisible: false,
@@ -490,7 +473,7 @@ export default {
       }
       this.handleFilter()
     },
-    resetTemp() {
+    resetRowModel() {
       this.temp = {
         channel_id: null,
         ordinal: null,
@@ -504,9 +487,13 @@ export default {
         med_thumbnail_path: null,
         large_thumbnail_path: null
       }
+
+      // for the add/edit localization titles dialog
+      this.addLocalizationTitleData = []
+      this.addingLocalizedTitle = ''
     },
     handleCreate() {
-      this.resetTemp()
+      this.resetRowModel()
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -536,7 +523,7 @@ export default {
 
           var localized_titles = []
           for(let i = 0; i< this.addLocalizationTitleData.length; i++) {
-            // document.Write(myArray[i]+"<br>");
+
             const localization = this.addLocalizationTitleData[i].localization
             const localizedTitle = this.addLocalizationTitleData[i].localizedTitle
             localized_titles.push({[localization]: localizedTitle}) 
@@ -549,7 +536,6 @@ export default {
             media_category: this.temp.media_category,
             updated_at: this.temp.updated_at,
             basename: this.temp.basename,
-            // localized_titles: [{ [this.temp.language_id]: this.temp.localizedname }],
             localized_titles: localized_titles,
             channel_id: this.temp.channel_id,
             banner_path: this.temp.banner_path,
@@ -571,7 +557,7 @@ export default {
 
               // reset globals
               this.channels = []
-              this.resetTemp()
+              this.resetRowModel()
 
               this.getChannels()
               console.log(`response: ${response}`)
