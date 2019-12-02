@@ -158,14 +158,14 @@
         </el-button>
         </el-form-item>
 
-        <!-- <el-form-item label="Language" prop="addLocalizationValue">
-          <el-select ref="select" v-model="addLocalizationValue" placeholder="en">
-            <el-option v-for="item in languageOptions" :key="item.addLocalizationValue" :label="item.label" :value="item.addLocalizationValue" />
+        <!-- <el-form-item label="Language" prop="pushLanguageId">
+          <el-select ref="select" v-model="pushLanguageId" placeholder="en">
+            <el-option v-for="item in languageOptions" :key="item.pushLanguageId" :label="item.label" :value="item.pushLanguageId" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Localized Title" prop="addingLocalizedTitle">
-          <el-input v-model="addingLocalizedTitle" />
+        <el-form-item label="Localized Title" prop="pushLocalizedName">
+          <el-input v-model="pushLocalizedName" />
         </el-form-item>
 
         <el-form-item>
@@ -227,15 +227,15 @@
       <el-form ref="addLocalizationForm" :rules="addLocalizationRules" :model="addLocalizationTemp" label-position="left" label-width="120px" style="width: 400px; margin-left:70px;">
 
         <!-- localized lang popover -->
-        <el-form-item label="Language ID" prop="addLocalizationValue">
-          <el-select ref="select" v-model="addLocalizationValue" placeholder="en">
-            <el-option v-for="item in languageOptions" :key="item.addLocalizationValue" :label="item.label" :value="item.addLocalizationValue" />
+        <el-form-item label="Language ID" prop="pushLanguageId">
+          <el-select ref="select" v-model="pushLanguageId" placeholder="en">
+            <el-option v-for="item in languageOptions" :key="item.pushLanguageId" :label="item.label" :value="item.pushLanguageId" />
           </el-select>
         </el-form-item>
 
         <!-- localized title field -->
-        <el-form-item label="Localized Name" prop="addingLocalizedTitle">
-          <el-input v-model="addingLocalizedTitle" />
+        <el-form-item label="Localized Name" prop="pushLocalizedName">
+          <el-input v-model="pushLocalizedName" />
         </el-form-item>
 
         <!-- add localization button -->
@@ -332,7 +332,10 @@ export default {
       playlists: null,
       totalPlaylists: 0,
       playlistsLoading: true,
+      addLocalizationTitleData: null,
       playlistDetailsLoading: true,
+      supportedLanguages: null,
+      supportedLanguagesLoading: true,
       listQuery: {
         page: 1,
         limit: 20,
@@ -372,23 +375,23 @@ export default {
       downloadLoading: false,
       addLocalizationDialogVisible: false,
       languageOptions: [
-        { addLocalizationValue: 'en', label: 'en' },
-        { addLocalizationValue: 'el', label: 'el' },
-        { addLocalizationValue: 'es', label: 'es' },
-        { addLocalizationValue: 'fr', label: 'fr' },
-        { addLocalizationValue: 'hi', label: 'hi' },
-        { addLocalizationValue: 'hu', label: 'hu' },
-        { addLocalizationValue: 'nl', label: 'nl' },
-        { addLocalizationValue: 'ny', label: 'ny' },
-        { addLocalizationValue: 'pt', label: 'pt' }
+        { pushLanguageId: 'en', label: 'en' },
+        { pushLanguageId: 'el', label: 'el' },
+        { pushLanguageId: 'es', label: 'es' },
+        { pushLanguageId: 'fr', label: 'fr' },
+        { pushLanguageId: 'hi', label: 'hi' },
+        { pushLanguageId: 'hu', label: 'hu' },
+        { pushLanguageId: 'nl', label: 'nl' },
+        { pushLanguageId: 'ny', label: 'ny' },
+        { pushLanguageId: 'pt', label: 'pt' }
       ],
-      addLocalizationValue: 'en',
-      addingLocalizedTitle: '',
-      addLocalizationTitleData: []
+      pushLanguageId: 'en',
+      pushLocalizedName: ''
     }
   },
   created() {
     this.getChannels()
+    this.getLanguages()
   },
   methods: {
     isNumeric: function(n) {
@@ -449,6 +452,19 @@ export default {
             // this.currentPlaylistDetails = response.data.result
           })
       }
+    },
+    getLanguages() {
+      console.log(`getLanguages`)
+      // if (channel_uuid != null) {
+        this.supportedLanguagesLoading = true
+        return axios.get(`http://localhost:4000/api/v1.3/languages/supported?offset=1&limit=50`)
+          .then(response => {
+            console.log(response)
+            this.supportedLanguagesLoading = false
+            this.supportedLanguages = response.data.result
+            console.log(`this.supportedLanguages: ${this.supportedLanguages}`)
+          })
+      // }
     },
     handleSetChannel(channel_uuid) {
       console.log(`handleSetChannel: ${channel_uuid}`)
@@ -511,7 +527,7 @@ export default {
 
       // for the add/edit localization titles dialog
       this.addLocalizationTitleData = []
-      this.addingLocalizedTitle = ''
+      this.pushLocalizedName = ''
     },
     handleCreate() {
       this.resetRowModel()
@@ -576,11 +592,18 @@ export default {
               })
               this.dialogFormVisible = false
 
-              // reset globals
+              //
+              // just POSTed/created a new playlist so reset globals
+              //
+
               this.channels = []
               this.resetRowModel()
 
+              // getChannels will fetch all channels + all playlists for
+              // the default channel(Bible)
               this.getChannels()
+              this.getLanguages()
+
               console.log(`response: ${response}`)
             })
           // .catch(function (error) {
@@ -645,7 +668,7 @@ export default {
       })
     },
     handleAddLocalizationTitle() {
-      this.addLocalizationTitleData.push({ language_id: this.addLocalizationValue, localizedname: this.addingLocalizedTitle })
+      this.addLocalizationTitleData.push({ language_id: this.pushLanguageId, localizedname: this.pushLocalizedName })
       console.log('this.addLocalizationTitleData', this.addLocalizationTitleData)
     },
     confirmLocalizedRowDelete(row) {
