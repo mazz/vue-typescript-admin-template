@@ -156,7 +156,7 @@
 
 
         <el-form-item label="Localizations" prop="localizations">
-        <el-button type="primary" @click="addLocalizationDialogVisible = true">
+        <el-button type="primary" @click="handleAddLocalizationDialogCreate">
           Edit
         </el-button>
         </el-form-item>
@@ -447,6 +447,11 @@ export default {
           type: 'success'
         })
       }
+    },
+    handleAddLocalizationDialogCreate() {
+      console.log(`handleAddLocalizationDialogCreate: ${this.addLocalizationDialogVisible}`)
+      this.addLocalizationDialogVisible = true
+      console.log(`handleAddLocalizationDialogCreate: ${this.addLocalizationDialogVisible}`)
     },
     handleFilter() {
       this.listQuery.page = 1
