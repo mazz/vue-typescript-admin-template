@@ -40,8 +40,8 @@
 
     <el-table
       :key="tableKey"
-      v-loading="listLoading"
-      :data="list"
+      v-loading="playlistsLoading"
+      :data="playlists"
       border
       fit
       highlight-current-row
@@ -101,7 +101,7 @@
       </el-table-column>
     </el-table>
 
-    <!-- <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" /> -->
+    <!-- <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getPlaylists" /> -->
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="120px" style="width: 600px; margin-left:30px;">
@@ -178,7 +178,7 @@
         </el-form-item> -->
 
 
-      <el-table v-loading="listLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
+      <el-table v-loading="playlistsLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
         <el-table-column align="center" label="Localization">
           <template slot-scope="{row}">
             <span>{{ row.localization }}</span>
@@ -254,7 +254,7 @@
         <el-table-column property="localizedTitle" label="Localized Title" />
       </el-table> -->
 
-      <el-table v-loading="listLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
+      <el-table v-loading="playlistsLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
         <el-table-column align="center" label="Localization" width="200">
           <template slot-scope="{row}">
             <span>{{ row.localization }}</span>
@@ -332,9 +332,9 @@ export default {
   data() {
     return {
       tableKey: 0,
-      list: null,
+      playlists: null,
       total: 0,
-      listLoading: true,
+      playlistsLoading: true,
       listQuery: {
         page: 1,
         limit: 20,
@@ -412,7 +412,7 @@ export default {
             if (channel.basename == 'Bible') {
               console.log('found Bible')
               bibleChannelUuid = channel.uuid
-              this.getList(bibleChannelUuid)
+              this.getPlaylists(bibleChannelUuid)
             }
           })
         })
@@ -420,18 +420,31 @@ export default {
           console.log('Error', err)
         })
       console.log('bibleChannelUuid', bibleChannelUuid)
-      // this.getList()
+      // this.getPlaylists()
     },
-    getList(channel_uuid) {
-      console.log(`getList: ${channel_uuid}`)
+    getPlaylists(channel_uuid) {
+      console.log(`getPlaylists: ${channel_uuid}`)
       if (channel_uuid != null) {
-        this.listLoading = true
+        this.playlistsLoading = true
         return axios.get(`http://localhost:4000/api/v1.3/channels/${channel_uuid}/playlists?language-id=en&offset=1&limit=1000`)
           .then(response => {
             console.log(response)
-            this.listLoading = false
-            this.list = response.data.result
+            this.playlistsLoading = false
+            this.playlists = response.data.result
             this.total = response.data.total_entries
+          })
+      }
+    },
+    getPlaylistDetails(playlist_uuid) {
+      console.log(`getPlaylistDetails: ${playlist_uuid}`)
+      if (playlist_uuid != null) {
+        // this.playlistsLoading = true
+        return axios.get(`http://localhost:4000/api/v1.3/playlist/${playlist_uuid}/details?offset=1&limit=50`)
+          .then(response => {
+            console.log(response)
+            // this.playlistsLoading = false
+            // this.list = response.data.result
+            // this.total = response.data.total_entries
           })
       }
     },
@@ -441,7 +454,7 @@ export default {
       // this.$store.dispatch('app/setSize', size)
       // this.refreshView()
       if (channel_uuid != null) {
-        this.getList(channel_uuid)
+        this.getPlaylists(channel_uuid)
         this.$message({
           message: 'Switch Channel Success',
           type: 'success'
@@ -455,7 +468,7 @@ export default {
     },
     handleFilter() {
       this.listQuery.page = 1
-      this.getList()
+      this.getPlaylists()
     },
     handleModifyStatus(row, status) {
       this.$message({
@@ -607,10 +620,10 @@ export default {
           const tempData = Object.assign({}, this.temp)
           tempData.updated_at = +new Date(tempData.updated_at) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
           updateArticle(tempData).then(() => {
-            for (const v of this.list) {
+            for (const v of this.playlists) {
               if (v.id === this.temp.id) {
-                const index = this.list.indexOf(v)
-                this.list.splice(index, 1, this.temp)
+                const index = this.playlists.indexOf(v)
+                this.playlists.splice(index, 1, this.temp)
                 break
               }
             }
@@ -645,8 +658,8 @@ export default {
         type: 'success',
         duration: 2000
       })
-      const index = this.list.indexOf(row)
-      this.list.splice(index, 1)
+      const index = this.playlists.indexOf(row)
+      this.playlists.splice(index, 1)
     },
     handleFetchPv(pv) {
       fetchPv(pv).then(response => {
