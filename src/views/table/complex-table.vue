@@ -101,7 +101,7 @@
       </el-table-column>
     </el-table>
 
-    <!-- <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getPlaylists" /> -->
+    <!-- <pagination v-show="totalPlaylists>0" :total="totalPlaylists" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getPlaylists" /> -->
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="120px" style="width: 600px; margin-left:30px;">
@@ -333,7 +333,7 @@ export default {
     return {
       tableKey: 0,
       playlists: null,
-      total: 0,
+      totalPlaylists: 0,
       playlistsLoading: true,
       listQuery: {
         page: 1,
@@ -431,7 +431,7 @@ export default {
             console.log(response)
             this.playlistsLoading = false
             this.playlists = response.data.result
-            this.total = response.data.total_entries
+            this.totalPlaylists = response.data.total_entries
           })
       }
     },
@@ -444,7 +444,7 @@ export default {
             console.log(response)
             // this.playlistsLoading = false
             // this.list = response.data.result
-            // this.total = response.data.total_entries
+            // this.totalPlaylists = response.data.total_entries
           })
       }
     },
