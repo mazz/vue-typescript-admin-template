@@ -178,13 +178,13 @@
       <el-table v-loading="playlistsLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
         <el-table-column align="center" label="Localization">
           <template slot-scope="{row}">
-            <span>{{ row.localization }}</span>
+            <span>{{ row.language_id }}</span>
           </template>
         </el-table-column>
 
         <el-table-column align="center" label="Localized Title">
           <template slot-scope="{row}">
-            <span>{{ row.localizedTitle }}</span>
+            <span>{{ row.localizedname }}</span>
           </template>
         </el-table-column>
 
