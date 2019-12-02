@@ -154,26 +154,9 @@
 
         <el-form-item label="Localizations" prop="localizations">
         <el-button type="primary" @click="handleAddLocalizationDialogCreate">
-          Edit
+          Add
         </el-button>
         </el-form-item>
-
-        <!-- <el-form-item label="Language" prop="language_identifier">
-          <el-select ref="select" v-model="language_identifier" placeholder="en">
-            <el-option v-for="item in supportedLanguages" :key="item.language_identifier" :label="item.label" :value="item.language_identifier" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="Localized Title" prop="pushLocalizedName">
-          <el-input v-model="pushLocalizedName" />
-        </el-form-item>
-
-        <el-form-item>
-          <el-button type="normal" @click="handleAddLocalizationTitle">
-            + Add Localized Title
-          </el-button>
-        </el-form-item> -->
-
 
       <el-table v-loading="playlistsLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
         <el-table-column align="center" label="Localization">
@@ -187,7 +170,7 @@
             <span>{{ row.localizedname }}</span>
           </template>
         </el-table-column>
-
+<!--
         <el-table-column align="center" label="Actions">
           <template slot-scope="{row}">
             <el-button
@@ -199,6 +182,7 @@
             </el-button>
           </template>
         </el-table-column>
+-->
       </el-table>
 
       </el-form>
@@ -519,7 +503,7 @@ export default {
       }
 
       // for the add/edit localization titles dialog
-      this.addLocalizationTitleData = []
+      this.addLocalizationTitleData = null
       this.pushLocalizedName = ''
     },
     handleCreate() {
@@ -629,6 +613,9 @@ export default {
       this.temp.updated_at = new Date(this.temp.updated_at)
 
       console.log(`handleUpdate this.temp.uuid: ${this.temp.uuid}`) // playlist uuid
+
+      // reset list of localizations. need to be refetched via playlist_titles
+      this.addLocalizationTitleData = null
 
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
