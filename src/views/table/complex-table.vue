@@ -103,6 +103,7 @@
 
     <!-- <pagination v-show="totalPlaylists>0" :total="totalPlaylists" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getPlaylists" /> -->
 
+    <!-- Main ADD/EDIT Playlist Dialog -->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="120px" style="width: 600px; margin-left:30px;">
         <el-form-item label="Channel" prop="channel">
@@ -124,10 +125,6 @@
         <el-form-item label="Basename" prop="basename">
           <el-input v-model="temp.basename" />
         </el-form-item>
-
-
-      <v-divider></v-divider>
-
 
         <!-- <el-form-item label="Localized Titles" prop="addlocalizedtitles">
         <el-button type="primary" @click="addLocalizationDialogVisible = true">
@@ -230,14 +227,14 @@
       <el-form ref="addLocalizationForm" :rules="addLocalizationRules" :model="addLocalizationTemp" label-position="left" label-width="120px" style="width: 400px; margin-left:70px;">
 
         <!-- localized lang popover -->
-        <el-form-item label="Language" prop="addLocalizationValue">
+        <el-form-item label="Language ID" prop="addLocalizationValue">
           <el-select ref="select" v-model="addLocalizationValue" placeholder="en">
             <el-option v-for="item in languageOptions" :key="item.addLocalizationValue" :label="item.label" :value="item.addLocalizationValue" />
           </el-select>
         </el-form-item>
 
         <!-- localized title field -->
-        <el-form-item label="Localized Title" prop="addingLocalizedTitle">
+        <el-form-item label="Localized Name" prop="addingLocalizedTitle">
           <el-input v-model="addingLocalizedTitle" />
         </el-form-item>
 
@@ -255,15 +252,15 @@
       </el-table> -->
 
       <el-table v-loading="playlistsLoading" :data="addLocalizationTitleData" border fit highlight-current-row style="width: 100%">
-        <el-table-column align="center" label="Localization" width="200">
+        <el-table-column align="center" label="Language ID" width="200">
           <template slot-scope="{row}">
-            <span>{{ row.localization }}</span>
+            <span>{{ row.language_id }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column align="center" label="Localized Title">
+        <el-table-column align="center" label="Localized Name">
           <template slot-scope="{row}">
-            <span>{{ row.localizedTitle }}</span>
+            <span>{{ row.localizedname }}</span>
           </template>
         </el-table-column>
 
@@ -335,6 +332,7 @@ export default {
       playlists: null,
       totalPlaylists: 0,
       playlistsLoading: true,
+      playlistDetailsLoading: true,
       listQuery: {
         page: 1,
         limit: 20,
@@ -437,14 +435,18 @@ export default {
     },
     getPlaylistDetails(playlist_uuid) {
       console.log(`getPlaylistDetails: ${playlist_uuid}`)
+
+      // editing existing playlist
       if (playlist_uuid != null) {
-        // this.playlistsLoading = true
+        this.playlistDetailsLoading = true
         return axios.get(`http://localhost:4000/api/v1.3/playlist/${playlist_uuid}/details?offset=1&limit=50`)
           .then(response => {
             console.log(response)
-            // this.playlistsLoading = false
-            // this.list = response.data.result
-            // this.totalPlaylists = response.data.total_entries
+            this.playlistDetailsLoading = false
+            console.log(`getPlaylistDetails result: ${response.data.result}`)
+            console.log(`getPlaylistDetails response.data.result[0].playlist_titles: ${response.data.result[0].playlist_titles}`)
+            this.addLocalizationTitleData = response.data.result[0].playlist_titles
+            // this.currentPlaylistDetails = response.data.result
           })
       }
     },
@@ -462,6 +464,7 @@ export default {
       }
     },
     handleAddLocalizationDialogCreate() {
+      this.getPlaylistDetails(this.temp.uuid) // playlist uuid
       console.log(`handleAddLocalizationDialogCreate: ${this.addLocalizationDialogVisible}`)
       this.addLocalizationDialogVisible = true
       console.log(`handleAddLocalizationDialogCreate: ${this.addLocalizationDialogVisible}`)
@@ -542,9 +545,9 @@ export default {
           var localized_titles = []
           for(let i = 0; i< this.addLocalizationTitleData.length; i++) {
 
-            const localization = this.addLocalizationTitleData[i].localization
-            const localizedTitle = this.addLocalizationTitleData[i].localizedTitle
-            localized_titles.push({[localization]: localizedTitle}) 
+            const localization = this.addLocalizationTitleData[i].language_id
+            const localizedname = this.addLocalizationTitleData[i].localizedname
+            localized_titles.push({[language_id]: localizedname}) 
           }
 
           console.log(`localized_titles: ${localized_titles}`)
@@ -608,6 +611,9 @@ export default {
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.temp.updated_at = new Date(this.temp.updated_at)
+
+      console.log(`handleUpdate this.temp.uuid: ${this.temp.uuid}`) // playlist uuid
+
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -639,7 +645,7 @@ export default {
       })
     },
     handleAddLocalizationTitle() {
-      this.addLocalizationTitleData.push({ localization: this.addLocalizationValue, localizedTitle: this.addingLocalizedTitle })
+      this.addLocalizationTitleData.push({ language_id: this.addLocalizationValue, localizedname: this.addingLocalizedTitle })
       console.log('this.addLocalizationTitleData', this.addLocalizationTitleData)
     },
     confirmLocalizedRowDelete(row) {
