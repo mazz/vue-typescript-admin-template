@@ -216,8 +216,8 @@
 
         <!-- localized lang popover -->
         <el-form-item label="Language ID" prop="language_identifier">
-          <el-select ref="select" v-model="language_identifier" placeholder="en">
-            <el-option v-for="item in supportedLanguages" :key="item.language_identifier" :label="item.language_identifier" :value="item.language_identifier" />
+          <el-select ref="select" v-model="selected_language_identifier" placeholder="en">
+            <el-option v-for="item in addableLanguages" :key="item.language_identifier" :label="item.language_identifier" :value="item.language_identifier" />
           </el-select>
         </el-form-item>
 
@@ -324,6 +324,7 @@ export default {
       playlistDetailsLoading: true,
       supportedLanguages: null,
       supportedLanguagesLoading: true,
+      addableLanguages: null,
       listQuery: {
         page: 1,
         limit: 20,
@@ -362,7 +363,7 @@ export default {
       },
       downloadLoading: false,
       addLocalizationDialogVisible: false,
-      language_identifier: '--',
+      selected_language_identifier: '--',
       pushLocalizedName: ''
     }
   },
@@ -426,7 +427,29 @@ export default {
             console.log(`getPlaylistDetails result: ${response.data.result}`)
             console.log(`getPlaylistDetails response.data.result[0].playlist_titles: ${response.data.result[0].playlist_titles}`)
             this.addLocalizationTitleData = response.data.result[0].playlist_titles
-            // this.currentPlaylistDetails = response.data.result
+
+            // extract the language identifiers from the playlist details
+            var language_identifiers = response.data.result[0].playlist_titles.map(function(title) {
+              return title.language_id;
+            });
+            console.log(`language_identifiers: ${language_identifiers}`)
+
+            // extract the language identifiers from all the currently supported languages
+            var supported_identifiers = this.supportedLanguages.map(function(languages) {
+              return languages.language_identifier;
+            });
+            console.log(`supported_identifiers: ${supported_identifiers}`)
+            
+            // languages that can be added to this playlist
+            var addable_identifiers = null
+            addable_identifiers = supported_identifiers.filter(n => !language_identifiers.includes(n));
+            console.log(`addable_identifiers: ${addable_identifiers}`)
+
+            // generate js objects as a data model
+            var addable_languages = addable_identifiers.map(function(language) {
+              return { language_identifier: language };
+            });
+            this.addableLanguages = addable_languages
           })
       }
     },
@@ -616,6 +639,9 @@ export default {
 
       // reset list of localizations. need to be refetched via playlist_titles
       this.addLocalizationTitleData = null
+
+      // reset selected language identifier popup
+      this.selected_language_identifier = '--'
 
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
