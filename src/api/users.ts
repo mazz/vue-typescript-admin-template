@@ -35,7 +35,7 @@ export const deleteUser = (username: string) =>
 
 export const login = (data: any) =>
   request({
-    url: '/users/login',
+    url: 'http://localhost:4000/api/auth/identity/callback',
     method: 'post',
     data
   })
