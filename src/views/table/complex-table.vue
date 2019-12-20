@@ -217,7 +217,7 @@
         <!-- localized lang popover -->
         <el-form-item label="Language ID" prop="language_identifier">
           <el-select ref="select" v-model="language_identifier" placeholder="en">
-            <el-option v-for="item in supportedLanguages" :key="item.language_identifier" :label="item.language_identifier" :value="item.language_identifier" />
+            <el-option v-for="item in addableLanguages" :key="item.language_identifier" :label="item.language_identifier" :value="item.language_identifier" />
           </el-select>
         </el-form-item>
 
@@ -324,6 +324,7 @@ export default {
       playlistDetailsLoading: true,
       supportedLanguages: null,
       supportedLanguagesLoading: true,
+      addableLanguages: null,
       listQuery: {
         page: 1,
         limit: 20,
@@ -336,6 +337,7 @@ export default {
       mediaCategoryOptions,
       sortOptions: [{ label: 'Ordinal Ascending', key: '+ordinal' }, { label: 'Ordinal Descending', key: '-ordinal' }],
       temp: {
+        uuid: null,
         channel_id: null,
         ordinal: null,
         updated_at: new Date(),
@@ -378,7 +380,7 @@ export default {
       // show playlists from the bible channel as default
       var bibleChannelUuid = ''
 
-      axios.get('http://localhost:4000/api/v1.3/orgs/64c1fa34-ebe9-425b-ae58-4815d933b01c/channels?language-id=en&offset=1&limit=50'
+      axios.get('http://localhost:4000/api/v1.3/orgs/6fed4e39-e53f-4ad0-823a-adb893345f36/channels?language-id=en&offset=1&limit=50'
         // { params: { type: 'all', }, }
       )
         .then((res) => {
@@ -427,6 +429,31 @@ export default {
             console.log(`getPlaylistDetails response.data.result[0].playlist_titles: ${response.data.result[0].playlist_titles}`)
             this.addLocalizationTitleData = response.data.result[0].playlist_titles
             // this.currentPlaylistDetails = response.data.result
+
+
+            // extract the language identifiers from the playlist details
+            var language_identifiers = response.data.result[0].playlist_titles.map(function(title) {
+              return title.language_id;
+            });
+            console.log(`language_identifiers: ${language_identifiers}`)
+
+            // extract the language identifiers from all the currently supported languages
+            var supported_identifiers = this.supportedLanguages.map(function(languages) {
+              return languages.language_identifier;
+            });
+            console.log(`supported_identifiers: ${supported_identifiers}`)
+            
+            // languages that can be added to this playlist
+            var addable_identifiers = null
+            addable_identifiers = supported_identifiers.filter(n => !language_identifiers.includes(n));
+            console.log(`addable_identifiers: ${addable_identifiers}`)
+
+            // generate js objects as a data model
+            var addable_languages = addable_identifiers.map(function(language) {
+              return { language_identifier: language };
+            });
+            this.addableLanguages = addable_languages
+
           })
       }
     },
@@ -593,18 +620,6 @@ export default {
               })
               console.log(`error: ${error}`)
             })
-
-          // }
-
-          // createArticle(this.temp).then(() => {
-          //   this.list.unshift(this.temp)
-          //   this.$notify({
-          //     title: 'Success',
-          //     message: 'Created Successfully',
-          //     type: 'success',
-          //     duration: 2000
-          //   })
-          // })
         }
       })
     },
@@ -624,30 +639,113 @@ export default {
       })
     },
     updateData() {
+      console.log('updateData')
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const tempData = Object.assign({}, this.temp)
-          tempData.updated_at = +new Date(tempData.updated_at) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
-          updateArticle(tempData).then(() => {
-            for (const v of this.playlists) {
-              if (v.id === this.temp.id) {
-                const index = this.playlists.indexOf(v)
-                this.playlists.splice(index, 1, this.temp)
-                break
-              }
-            }
-            this.dialogFormVisible = false
-            this.$notify({
-              title: 'Success',
-              message: 'Update Successfully',
-              type: 'success',
-              duration: 2000
+          console.log(`valid, refs dataForm: ${this.$refs['dataForm']}`)
+          console.log(`valid, temp.ordinal: ${this.temp.ordinal}`)
+          console.log(`valid, temp.media_category: ${this.temp.media_category}`)
+          console.log(`valid, temp.updated_at: ${this.temp.updated_at}`)
+          console.log(`valid, temp.basename: ${this.temp.basename}`)
+          console.log(`valid, temp.localizedname: ${this.temp.localizedname}`)
+          console.log(`valid, temp.language_id: ${this.temp.language_id}`)
+          console.log(`valid, temp.channel_id: ${this.temp.channel_id}`)
+          console.log(`valid, temp.banner_path: ${this.temp.banner_path}`)
+          console.log(`valid, temp.small_thumbnail_path: ${this.temp.small_thumbnail_path}`)
+          console.log(`valid, temp.med_thumbnail_path: ${this.temp.med_thumbnail_path}`)
+          console.log(`valid, temp.large_thumbnail_path: ${this.temp.large_thumbnail_path}`)
+
+          var ordinal = Number(this.temp.ordinal)
+          var language_id = this.temp.language_id
+          console.log(`language_id: ${language_id}`)
+
+          var localized_titles = []
+          for(let i = 0; i< this.addLocalizationTitleData.length; i++) {
+
+            const localization = this.addLocalizationTitleData[i].language_id
+            const localizedname = this.addLocalizationTitleData[i].localizedname
+            localized_titles.push({[localization]: localizedname}) 
+            console.log(`localized_title localization: ${localization} localizedname: ${localizedname}`)
+
+          }
+          const body = {
+            ordinal: ordinal,
+            media_category: this.temp.media_category,
+            updated_at: this.temp.updated_at,
+            basename: this.temp.basename,
+            localized_titles: localized_titles,
+            channel_id: this.temp.channel_id,
+            banner_path: this.temp.banner_path,
+            small_thumbnail_path: this.temp.small_thumbnail_path,
+            med_thumbnail_path: this.temp.med_thumbnail_path,
+            large_thumbnail_path: this.temp.large_thumbnail_path,
+            playlist_uuid: this.temp.uuid // append playlist_uuid to json body to do update instead of add
+          }
+
+          axios.post('http://localhost:4000/api/v1.3/playlists/addorupdate', body)
+          // .then(function (response) {
+            .then((response) => {
+              this.$notify({
+                title: 'Success',
+                message: 'playlist updated successfully',
+                type: 'success',
+                duration: 2000
+              })
+              this.dialogFormVisible = false
+
+              //
+              // just POSTed/created a new playlist so reset globals
+              //
+
+              this.channels = []
+              this.resetRowModel()
+
+              // getChannels will fetch all channels + all playlists for
+              // the default channel(Bible)
+              this.getChannels()
+              this.getLanguages()
+
+              console.log(`response: ${response}`)
             })
-          })
+          // .catch(function (error) {
+            .catch((error) => {
+              this.$notify({
+                title: 'Error',
+                message: 'Please check the values you attempted to submit',
+                type: 'error',
+                duration: 2000
+              })
+              console.log(`error: ${error}`)
+            })
         }
       })
     },
+    //   this.$refs['dataForm'].validate((valid) => {
+    //     if (valid) {
+    //       const tempData = Object.assign({}, this.temp)
+    //       tempData.updated_at = +new Date(tempData.updated_at) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
+    //       updateArticle(tempData).then(() => {
+    //         for (const v of this.playlists) {
+    //           if (v.id === this.temp.id) {
+    //             const index = this.playlists.indexOf(v)
+    //             this.playlists.splice(index, 1, this.temp)
+    //             break
+    //           }
+    //         }
+    //         this.dialogFormVisible = false
+    //         this.$notify({
+    //           title: 'Success',
+    //           message: 'Update Successfully',
+    //           type: 'success',
+    //           duration: 2000
+    //         })
+    //       })
+    //     }
+    //   })
+    // },
     handleAddLocalizationTitle() {
+      console.log('this.language_identifier', this.language_identifier)
+      
       this.addLocalizationTitleData.push({ language_id: this.language_identifier, localizedname: this.pushLocalizedName })
       console.log('this.addLocalizationTitleData', this.addLocalizationTitleData)
     },
